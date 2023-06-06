@@ -33,7 +33,7 @@ library(coda)
 source("State Sampler 3D.R")
 
 #Nimble model
-#note, to use "state sampler 2D", you *must* have objects "psi.site", "theta.site", and "p.site.sample.rep"
+#note, to use "state sampler 2D", you *must* have objects "psi.site", "theta.site.sample", and "p.site.sample.rep"
 #plugging in fixed parameter to these structures here, but can let them vary at these levels
 NimModel <- nimbleCode({
   logit(psi) ~ dlogis(0,1) #P(measurable C at site)
@@ -41,10 +41,10 @@ NimModel <- nimbleCode({
   logit(p) ~ dlogis(0,1) #P(measurable C in replicate)
   for(i in 1:M){
     psi.site[i] <- psi
-    theta.site[i] <- theta
     z[i] ~ dbern(psi) #is site occupied by edna?
     for(j in 1:J){
-      w[i,j] ~ dbern(theta.site[i]*z[i]) #is there edna in this sample?
+      theta.site.sample[i,j] <- theta
+      w[i,j] ~ dbern(theta.site.sample[i,j]*z[i]) #is there edna in this sample?
       for(k in 1:K){
         p.site.sample.rep[i,j,k] <- p
         y[i,j,k] ~ dbinom(p=p.site.sample.rep[i,j,k]*w[i,j],size=1)

@@ -1,5 +1,5 @@
 #this test script assumes you are using 2D data, i.e. p does not vary over replicates
-#so y is summed over replicates
+#so y is summed over replicates. See 3D test script if p varies across replicates.
 
 #Data dimensions (definitions below may be specific to eDNA interpretation)
 M <- 100 #sites
@@ -36,7 +36,7 @@ library(coda)
 source("State Sampler 2D.R")
 
 #Nimble model
-#note, to use "state sampler 2D", you *must* have objects "psi.site", "theta.site", and "p.site.sample"
+#note, to use "state sampler 2D", you *must* have objects "psi.site", "theta.site.sample", and "p.site.sample"
 #plugging in fixed parameter to these structures here, but can let them vary at these levels
 NimModel <- nimbleCode({
   logit(psi) ~ dlogis(0,1) #P(measurable C at site)
@@ -44,11 +44,11 @@ NimModel <- nimbleCode({
   logit(p) ~ dlogis(0,1) #P(measurable C in replicate)
   for(i in 1:M){
     psi.site[i] <- psi
-    theta.site[i] <- theta
     z[i] ~ dbern(psi) #is site occupied by edna?
     for(j in 1:J){
+      theta.site.sample[i,j] <- theta
       p.site.sample[i,j] <- p
-      w[i,j] ~ dbern(theta.site[i]*z[i]) #is there edna in this sample?
+      w[i,j] ~ dbern(theta.site.sample[i,j]*z[i]) #is there edna in this sample?
       y[i,j] ~ dbinom(p=p.site.sample[i,j]*w[i,j],size=K)
     }
   }

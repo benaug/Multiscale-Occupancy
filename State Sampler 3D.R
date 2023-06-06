@@ -11,7 +11,7 @@ StateSampler3D <- nimbleFunction(
   },
   run = function() {
     psi <- model$psi.site
-    theta <- model$theta.site
+    theta <- model$theta.site.sample
     p <- model$p.site.sample.rep
     # z.det <- rep(0,M)
     z.preds <- rep(0,M)
@@ -32,7 +32,7 @@ StateSampler3D <- nimbleFunction(
       for(j in 1:J){
         for(w.state in 1:2){
           #w logProb
-          lp.w[j,w.state] <- dbinom(w.state-1,1,theta[i],log=TRUE)
+          lp.w[j,w.state] <- dbinom(w.state-1,1,theta[i,j],log=TRUE)
           #add y logProb
           lp.w[j,w.state] <- lp.w[j,w.state] + sum(dbinom(model$y[i,j,1:K],K,p[i,j,1:K]*(w.state-1),log=TRUE))
         }
