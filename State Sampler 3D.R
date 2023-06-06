@@ -34,7 +34,7 @@ StateSampler3D <- nimbleFunction(
           #w logProb
           lp.w[j,w.state] <- dbinom(w.state-1,1,theta[i,j],log=TRUE)
           #add y logProb
-          lp.w[j,w.state] <- lp.w[j,w.state] + sum(dbinom(model$y[i,j,1:K],K,p[i,j,1:K]*(w.state-1),log=TRUE))
+          lp.w[j,w.state] <- lp.w[j,w.state] + sum(dbinom(model$y[i,j,1:K],1,p[i,j,1:K]*(w.state-1),log=TRUE))
         }
         max.lp <- max(lp.w[j,])
         lp.w.total[j] <- max.lp+log(sum(exp(lp.w[j,]-max.lp)))
