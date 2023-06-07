@@ -15,13 +15,13 @@ StateSampler3D <- nimbleFunction(
     p <- model$p.site.sample.rep
     # z.det <- rep(0,M)
     z.preds <- rep(0,M)
-    w.preds <- matrix(0,M,J)
+    w.preds <- matrix(0,M,max(J))
     
     for(i in 1:M){
       # z.det[i] <- 1*(sum(model$y[i,,])>0) #can supply via control, but calculating here so I can do parallel without recompiling
       lp.z <- rep(0,2)
-      lp.w <- matrix(0,J,2)
-      lp.w.total <- rep(0,J)
+      lp.w <- matrix(0,J[i],2)
+      lp.w.total <- rep(0,J[i])
       if(z.det[i]==1){
         lp.z[1] <- -Inf #cannot have z=0 if there were detections
       }else{
@@ -29,12 +29,12 @@ StateSampler3D <- nimbleFunction(
       }
       lp.z[2] <- dbinom(1,1,psi[i],log=TRUE)
       #w stuff for only if z=1
-      for(j in 1:J){
+      for(j in 1:J[i]){
         for(w.state in 1:2){
           #w logProb
           lp.w[j,w.state] <- dbinom(w.state-1,1,theta[i,j],log=TRUE)
           #add y logProb
-          lp.w[j,w.state] <- lp.w[j,w.state] + sum(dbinom(model$y[i,j,1:K],1,p[i,j,1:K]*(w.state-1),log=TRUE))
+          lp.w[j,w.state] <- lp.w[j,w.state] + sum(dbinom(model$y[i,j,1:K[i,j]],1,p[i,j,1:K[i,j]]*(w.state-1),log=TRUE))
         }
         max.lp <- max(lp.w[j,])
         lp.w.total[j] <- max.lp+log(sum(exp(lp.w[j,]-max.lp)))
@@ -50,7 +50,7 @@ StateSampler3D <- nimbleFunction(
       }
       if(z.preds[i]==1){
         #sample w_ij's if z_i=1
-        for(j in 1:J){
+        for(j in 1:J[i]){
             w.probs <- exp(lp.w[j,])
             w.probs <- w.probs/sum(w.probs)
             w.preds[i,j] <- rcat(1,w.probs)-1

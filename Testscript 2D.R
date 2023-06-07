@@ -6,6 +6,15 @@ M <- 100 #sites
 J <- 10 #samples
 K <- 5 #replicates
 
+#nimble code set up for unequal usage. Plugging in equal usage here
+J1D <- rep(J,M)
+K2D <- matrix(K,M,J)
+
+#Here is an example of unequal usage
+J1D <- sample(c(5,10,15),M,replace=TRUE)
+K2D <- matrix(sample(c(3,5,8),M*max(J1D),replace=TRUE),M,max(J1D))
+
+
 #parameter values
 psi <- 0.25
 theta <-  0.25
@@ -13,13 +22,13 @@ p <- 0.5
 
 #simulate data
 z <- rbinom(M,1,psi) #site occupancy states
-w <- matrix(0,M,J) #sample occupancy states
-y <- array(0,dim=c(M,J,K)) #detections
+w <- matrix(0,M,max(J1D)) #sample occupancy states
+y <- array(0,dim=c(M,max(J1D),max(K2D))) #detections
 for(i in 1:M){ #sites
   if(z[i]==1){
-    for(j in 1:J){ #samples
+    for(j in 1:J1D[i]){ #samples
       w[i,j] <- rbinom(1,1,theta)
-      y[i,j,] <- rbinom(K,1,p*w[i,j]) #replicates
+      y[i,j,1:K2D[i,j]] <- rbinom(K2D[i,j],1,p*w[i,j]) #replicates
     }
   }
 }
@@ -45,18 +54,17 @@ NimModel <- nimbleCode({
   for(i in 1:M){
     psi.site[i] <- psi
     z[i] ~ dbern(psi) #is site occupied by edna?
-    for(j in 1:J){
-      theta.site.sample[i,j] <- theta
-      p.site.sample[i,j] <- p
+    for(j in 1:J[i]){
+      theta.site.sample[i,j] <- theta   #can multiply by usage here, e.g., theta*usage[i,j], where usage is 0 or 1
+      p.site.sample[i,j] <- p  #can multiply by usage here
       w[i,j] ~ dbern(theta.site.sample[i,j]*z[i]) #is there edna in this sample?
-      y[i,j] ~ dbinom(p=p.site.sample[i,j]*w[i,j],size=K)
+      y[i,j] ~ dbinom(p=p.site.sample[i,j]*w[i,j],size=K[i,j])
     }
   }
 })# end model
 
-
 Niminits <- list(z=z.init,w=w.init)
-constants <- list(M=M,J=J,K=K)
+constants <- list(M=M,J=J1D,K=K2D)
 Nimdata <- list(y=y2D)
 
 # set parameters to monitor
@@ -73,7 +81,7 @@ w.det <- 1*(apply(y,c(1,2),sum)>0)
 z.det <- 1*(rowSums(w.det)>0)
 conf$removeSampler(c('z','w'))
 conf$addSampler(target = paste("z[1:",M,"]"),
-                type = 'StateSampler2D',control = list(M=M,J=J,K=K,z.det=z.det),
+                type = 'StateSampler2D',control = list(M=M,J=J1D,K=K2D,z.det=z.det),
                 silent = TRUE)
 #nimble will tell you no samplers are assigned to w, because I set the target to z only. Ignore.
 
