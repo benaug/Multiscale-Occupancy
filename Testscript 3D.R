@@ -92,7 +92,7 @@ Cmodel <- compileNimble(Rmodel)
 Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
 
 
-Cmcmc$run(5000,reset=TRUE)
+Cmcmc$run(5000,reset=FALSE)  #can keep running this line to continue run
 mvSamples = as.matrix(Cmcmc$mvSamples)
 
 burnin=500
