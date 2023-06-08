@@ -6,7 +6,7 @@
 #Data dimensions (definitions below may be specific to eDNA interpretation)
 M <- 100 #sites
 J <- 10 #samples
-K <- 5 #replicates
+K <- 10 #replicates
 
 #nimble code set up for unequal usage. Plugging in equal usage here
 J1D <- rep(J,M)
@@ -19,7 +19,7 @@ K2D <- matrix(K,M,J)
 
 #parameter values
 psi <- 0.25
-theta <-  0.5
+theta <-  0.25
 p <- 0.25
 sd.theta <- 0.5 #theta sd on logit scale
 sd.p <- 0.5 #p sd on logit scale
@@ -98,6 +98,13 @@ conf$addSampler(target = paste("z[1:",M,"]"),
                 type = 'StateSampler2D',control = list(M=M,J=J1D,K=K2D,z.det=z.det),
                 silent = TRUE)
 #nimble will tell you no samplers are assigned to w, because I set the target to z only. Ignore.
+
+#might want to block these--posteriors can be strongly correlated
+# conf$removeSampler(c('logit_theta','theta.sd'))
+# conf$addSampler(target = c('logit_theta','theta.sd'),type = 'RW_block',control = list(),silent = TRUE)
+# conf$removeSampler(c('logit_p','p.sd'))
+# conf$addSampler(target = c('logit_p','p.sd'),type = 'RW_block',control = list(),silent = TRUE)
+
 
 # Build and compile
 Rmcmc <- buildMCMC(conf)
